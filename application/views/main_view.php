@@ -4,8 +4,15 @@
 <head>
 	<meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
 	<title>CCAS</title>
 	<link rel="stylesheet" type="text/css" href="<?php echo base_url().'assets/css/bootstrap.css'?>">
+  <style>
+  tbody .collapse {
+    border-top: 3px dotted;
+  }
+
+</style>
 </head>
 <body>
 <div class="container"> <!--responsive fixed width container -->
@@ -24,23 +31,7 @@
             </div>
             <div id="studentdata">
             </div>
-            <table class="table table-striped" id="mydata">
-                <thead>
-                    <tr>
-                        <th>Unit ID</th>
-                        <th>Unit Name</th>
-                        <th>Credits</th>
-                        <th>Prerequisite</th>
-                        <th>Status</th>
-                        <th>Grade</th>
-                        <th>Period</th>
-                        <th>Institution</th>
-                        <th>Pickable</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="show_data">
-                </tbody>
+            <table class="table table-striped" id="show_data">
             </table>
         </div>
     </div>
@@ -235,40 +226,61 @@ $(document).ready(function(){
                 $('#studentdata').html(studentDetail);
 
                 let sortedData= data.sort(predicateBy("status")).sort(predicateBy("is_pickable")).reverse();
-                let html = '';
+
+
+                let html, htmlCollapse, pickable;
+                let htmlCombined = '<thead><tr><th>Unit ID</th><th>Unit Name</th><th>Credits</th><th>Prerequisite</th><th>Status</th></tr></thead>';
+                
                 let i;
-                for(i=1; i<sortedData.length; i++){
+                for(i=0; i<sortedData.length-1; i++){
+                  if ((sortedData[i].is_pickable) == 1) {
+                    pickable='Yes'
+                  } else {
+                    pickable='No'
+                  }
+                  html ='';
+                  htmlCollapse = '';
                     switch(sortedData[i].status) {
                       case 'not enrolled':
-                      html += '<tr class="bg-primary text-white">';
+                      html += '<tbody><tr class="bg-primary text-white clickable" data-toggle="collapse" data-target="#group-of-row-' + i +'">';
+                      htmlCollapse += '<tbody><tr id="group-of-row-' + i + '" class="bg-primary text-white collapse">';
                       break;
                       case 'enrolled':
-                      html += '<tr class="bg-info text-white">';
+                      html += '<tbody><tr class="bg-info text-white clickable" data-toggle="collapse" data-target="#group-of-row-' + i +'">';
+                      htmlCollapse += '<tbody><tr id="group-of-row-' + i + '" class="bg-info text-white collapse">';
                       break;
                       case 'passed':
-                      html += '<tr class="bg-success text-white">';
+                      html += '<tbody><tr class="bg-success text-white clickable" data-toggle="collapse" data-target="#group-of-row-' + i +'">';
+                      htmlCollapse += '<tbody><tr id="group-of-row-' + i + '" class="bg-success text-white collapse">';
                       break;
                       case 'failed':
-                      html += '<tr class="bg-danger text-white">';
+                      html += '<tbody><tr class="bg-danger text-white clickable" data-toggle="collapse" data-target="#group-of-row-' + i +'">';
+                      htmlCollapse += '<tbody><tr id="group-of-row-' + i + '" class="bg-danger text-white collapse">';
                       break;
                       case 'un enrolled':
-                      html += '<tr class="bg-secondary text-white">';
+                      html += '<tbody><tr class="bg-secondary text-white clickable" data-toggle="collapse" data-target="#group-of-row-' + i +'">';
+                      htmlCollapse += '<tbody><tr id="group-of-row-' + i + '" class="bg-secondary text-white collapse">';
                       break;
                       case 'deferred':
-                      html += '<tr class="bg-dark text-white">';
+                      html += '<tbody><tr class="bg-dark text-white clickable" data-toggle="collapse" data-target="#group-of-row-' + i +'">';
+                      htmlCollapse += '<tbody><tr id="group-of-row-' + i + '" class="bg-dark text-white collapse">';
                       break;
                     }
-                    html += '<td>'+sortedData[i].unit_id+'</td>'+
+
+                    html += '<td><span class="badge badge-light lg">+</span> '+sortedData[i].unit_id+'</td>'+
                             '<td>'+sortedData[i].unit_name+'</td>'+
                             '<td>'+sortedData[i].unit_credits+'</td>'+
                             '<td>'+sortedData[i].unit_prerequisite+'</td>'+
-                            '<td>'+sortedData[i].status+'</td>'+
-                            '<td>'+sortedData[i].grade+'</td>'+
-                            '<td>'+sortedData[i].period+'</td>'+
-                            '<td>'+sortedData[i].institution+'</td>'+
-                            '<td>'+sortedData[i].is_pickable+'</td>';
+                            '<td>'+sortedData[i].status+'</td></tr></tbody>';
+                            
+                    htmlCollapse +=
+                            '<td>Grade: '+sortedData[i].grade+'</td>'+
+                            '<td>Period: '+sortedData[i].period+'</td>'+
+                            '<td>Institution: '+sortedData[i].institution+'</td>'+
+                            '<td>Pickable: '+pickable+'</td>';
+
                     if (sortedData[i].is_pickable == 1) {
-                      html += '<td style="text-align:right;">'+
+                      htmlCollapse += '<td style="text-align:right;">'+
                               '<a href="javascript:void(0);" class="btn btn-light btn-sm item_edit" data-student_id="'
                               +sortedData[i].student_id+'" data-unit_id="'
                               +sortedData[i].unit_id+'" data-unit_name="'
@@ -276,14 +288,15 @@ $(document).ready(function(){
                               +sortedData[i].status+'" data-grade="'
                               +sortedData[i].grade+'" data-period="'
                               +sortedData[i].period+'" data-institution="'
-                              +sortedData[i].institution+'">Edit</a></td></tr>';
+                              +sortedData[i].institution+'">Edit</a></td></tr></tbody>';
                     } else {
-                      html += '<td style="text-align:right;">'+
-                              '<a href="javascript:void(0);" class="btn btn-light btn-sm disabled item_edit"><del>Edit</del></a></td></tr>';
+                      htmlCollapse += '<td style="text-align:right;">'+
+                              '<a href="javascript:void(0);" class="btn btn-light btn-sm disabled item_edit"><del>Edit</del></a></td></tr></tbody>';
                     }
+                    htmlCombined += html + htmlCollapse;
 
                 }
-                $('#show_data').html(html);
+                $('#show_data').html(htmlCombined);
             }
 
         });
@@ -388,7 +401,7 @@ $(document).ready(function(){
 
 
       //update record to database
-      $('#btn_update').on('click',function(e){
+      $('#btn_update').on('click',function(e){ 
             var student_id = $('#student_id_edit').val();
             var unit_id = $('#unit_id_edit').val();
             var status = $('#status_edit').val();
